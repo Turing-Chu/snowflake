@@ -16,11 +16,20 @@ func TestNewNode(t *testing.T) {
 		t.Fatalf("error creating NewNode, %s", err)
 	}
 
-	_, err = NewNode(5000)
+	_, err = NewNode(1023)
+	if err != nil {
+		t.Fatalf("no error creating NewNode, %s", err)
+	}
+
+	_, err = NewNode(1024)
 	if err == nil {
 		t.Fatalf("no error creating NewNode, %s", err)
 	}
 
+	_, err = NewNode(5000)
+	if err == nil {
+		t.Fatalf("no error creating NewNode, %s", err)
+	}
 }
 
 // lazy check if Generate will create duplicate IDs
@@ -47,7 +56,7 @@ func TestRace(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000000000; i++ {
 
-			NewNode(1)
+			_, _ = NewNode(1)
 		}
 	}()
 
@@ -104,6 +113,31 @@ func TestInt64(t *testing.T) {
 
 }
 
+func TestHex(t *testing.T) {
+	node, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	oID := node.Generate()
+	i := oID.Hex()
+
+	pID, err := ParseHex(i)
+	if err != nil {
+		t.Fatalf("error parsing, %s", err)
+	}
+
+	if pID != oID {
+		t.Fatalf("pID %v != oID %v", pID, oID)
+	}
+
+	mi := int64(1116766490855473152)
+	pID = ParseInt64(mi)
+	if pID.Int64() != mi {
+		t.Fatalf("pID %v != mi %v", pID.Int64(), mi)
+	}
+
+}
 func TestString(t *testing.T) {
 	node, err := NewNode(0)
 	if err != nil {
@@ -162,6 +196,27 @@ func TestBase2(t *testing.T) {
 	_, err = ParseBase2(ms)
 	if err == nil {
 		t.Fatalf("no error parsing %s", ms)
+	}
+}
+
+func TestBase16(t *testing.T) {
+
+	node, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	for i := 0; i < 100; i++ {
+
+		sf := node.Generate()
+		b16i := sf.Base16()
+		psf, err := ParseBase16(b16i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sf != psf {
+			t.Fatal("Parsed does not match String.")
+		}
 	}
 }
 
@@ -327,13 +382,13 @@ func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
 	expected := "\"13587\""
 
-	bytes, err := id.MarshalJSON()
+	b, err := id.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Unexpected error during MarshalJSON")
 	}
 
-	if string(bytes) != expected {
-		t.Fatalf("Got %s, expected %s", string(bytes), expected)
+	if string(b) != expected {
+		t.Fatalf("Got %s, expected %s", string(b), expected)
 	}
 }
 
@@ -382,7 +437,7 @@ func BenchmarkParseBase32(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase32([]byte(b32i))
+		_, _ = ParseBase32([]byte(b32i))
 	}
 }
 func BenchmarkBase32(b *testing.B) {
@@ -407,7 +462,7 @@ func BenchmarkParseBase58(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase58([]byte(b58))
+		_, _ = ParseBase58([]byte(b58))
 	}
 }
 func BenchmarkBase58(b *testing.B) {
@@ -452,14 +507,14 @@ func BenchmarkUnmarshal(b *testing.B) {
 	// Generate the ID to unmarshal
 	node, _ := NewNode(1)
 	id := node.Generate()
-	bytes, _ := id.MarshalJSON()
+	_bytes, _ := id.MarshalJSON()
 
 	var id2 ID
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = id2.UnmarshalJSON(bytes)
+		_ = id2.UnmarshalJSON(_bytes)
 	}
 }
 

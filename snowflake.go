@@ -14,7 +14,9 @@ import (
 var (
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
 	// You may customize this to set a different epoch for your application.
-	Epoch int64 = 1288834974657
+    // 1577811600000: 2020-01-01 00:00:00+08:00
+    // EpochBits = 41, ID is 64 bit and first set to 0 unused.
+    Epoch int64 = 1547811600000
 
 	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -23,22 +25,12 @@ var (
 	// StepBits holds the number of bits to use for Step
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8 = 12
-
-	// DEPRECATED: the below four variables will be removed in a future release.
-	mu        sync.Mutex
-	nodeMax   int64 = -1 ^ (-1 << NodeBits)
-	nodeMask        = nodeMax << StepBits
-	stepMask  int64 = -1 ^ (-1 << StepBits)
-	timeShift       = NodeBits + StepBits
-	nodeShift       = StepBits
 )
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
-
 var decodeBase32Map [256]byte
 
 const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
-
 var decodeBase58Map [256]byte
 
 // A JSONSyntaxError is returned from UnmarshalJSON if an invalid ID is provided.
@@ -58,6 +50,7 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 // This speeds up the process tremendously.
 func init() {
 
+	// TODO为什么要先设置为0xFF 然后再设置变量?
 	for i := 0; i < len(encodeBase58Map); i++ {
 		decodeBase58Map[i] = 0xFF
 	}
@@ -80,13 +73,13 @@ func init() {
 type Node struct {
 	mu    sync.Mutex
 	epoch time.Time
-	time  int64
-	node  int64
-	step  int64
+	time  int64			// 时间戳
+	node  int64			// 分布式节点
+	step  int64			// 序列号
 
-	nodeMax   int64
-	nodeMask  int64
-	stepMask  int64
+	nodeMax   int64		// 分布式节点最大位数, 默认是10bit
+	nodeMask  int64		// 分布式节点存储的值,
+	stepMask  int64		// 序列号存储的值
 	timeShift uint8
 	nodeShift uint8
 }
@@ -98,17 +91,6 @@ type ID int64
 // NewNode returns a new snowflake node that can be used to generate snowflake
 // IDs
 func NewNode(node int64) (*Node, error) {
-
-	// re-calc in case custom NodeBits or StepBits were set
-	// DEPRECATED: the below block will be removed in a future release.
-	mu.Lock()
-	nodeMax = -1 ^ (-1 << NodeBits)
-	nodeMask = nodeMax << StepBits
-	stepMask = -1 ^ (-1 << StepBits)
-	timeShift = NodeBits + StepBits
-	nodeShift = StepBits
-	mu.Unlock()
-
 	n := Node{}
 	n.node = node
 	n.nodeMax = -1 ^ (-1 << NodeBits)
@@ -166,6 +148,16 @@ func (f ID) Int64() int64 {
 	return int64(f)
 }
 
+// Int64 returns an int64 of the snowflake ID
+func (f ID) Hex() string {
+	return strconv.FormatInt(int64(f), 16)
+}
+// ParseBase16 converts a hex string into a snowflake ID
+func ParseHex(id string) (ID, error) {
+	i, err := strconv.ParseInt(id, 16, 64)
+	return ID(i), err
+}
+
 // ParseInt64 converts an int64 into a snowflake ID
 func ParseInt64(id int64) ID {
 	return ID(id)
@@ -194,10 +186,22 @@ func ParseBase2(id string) (ID, error) {
 	return ID(i), err
 }
 
+// Base16 returns a hex string of the snowflake ID
+func (f ID) Base16() string {
+	return strconv.FormatInt(int64(f), 16)
+}
+
+// ParseBase16 converts a hex string into a snowflake ID
+func ParseBase16(id string) (ID, error) {
+	i, err := strconv.ParseInt(id, 16, 64)
+	return ID(i), err
+}
+
+
 // Base32 uses the z-base-32 character set but encodes and decodes similar
 // to base58, allowing it to create an even smaller result string.
 // NOTE: There are many different base32 implementations so becareful when
-// doing any interoperation.
+// doing any inter-operation.
 func (f ID) Base32() string {
 
 	if f < 32 {
@@ -220,7 +224,7 @@ func (f ID) Base32() string {
 
 // ParseBase32 parses a base32 []byte into a snowflake ID
 // NOTE: There are many different base32 implementations so becareful when
-// doing any interoperation.
+// doing any inter-operation.
 func ParseBase32(b []byte) (ID, error) {
 
 	var id int64
@@ -320,24 +324,6 @@ func (f ID) IntBytes() [8]byte {
 // a snowflake ID
 func ParseIntBytes(id [8]byte) ID {
 	return ID(int64(binary.BigEndian.Uint64(id[:])))
-}
-
-// Time returns an int64 unix timestamp in milliseconds of the snowflake ID time
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + Epoch
-}
-
-// Node returns an int64 of the snowflake ID node number
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Node() int64 {
-	return int64(f) & nodeMask >> nodeShift
-}
-
-// Step returns an int64 of the snowflake step (or sequence) number
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Step() int64 {
-	return int64(f) & stepMask
 }
 
 // MarshalJSON returns a json byte array string of the snowflake ID.

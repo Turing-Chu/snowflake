@@ -1,6 +1,10 @@
 snowflake
 ====
-[![GoDoc](https://godoc.org/github.com/bwmarrin/snowflake?status.svg)](https://godoc.org/github.com/bwmarrin/snowflake) [![Go report](http://goreportcard.com/badge/bwmarrin/snowflake)](http://goreportcard.com/report/bwmarrin/snowflake) [![Coverage](http://gocover.io/_badge/github.com/bwmarrin/snowflake)](https://gocover.io/github.com/bwmarrin/snowflake) [![Build Status](https://travis-ci.org/bwmarrin/snowflake.svg?branch=master)](https://travis-ci.org/bwmarrin/snowflake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23info-blue.svg)](https://discord.gg/0f1SbxBZjYq9jLBk)
+
+> Reference [bwmarrin/snowflake/README.md](https://github.com/bwmarrin/snowflake/blob/master/README.md)
+
+
+[![GoDoc](https://godoc.org/github.com/Turing-Chu/snowflake?status.svg)](https://godoc.org/github.com/Turing-Chu/snowflake) [![Go report](http://goreportcard.com/badge/bwmarrin/snowflake)](http://goreportcard.com/report/bwmarrin/snowflake) [![Coverage](http://gocover.io/_badge/github.com/bwmarrin/snowflake)](https://gocover.io/github.com/bwmarrin/snowflake) [![Build Status](https://travis-ci.org/bwmarrin/snowflake.svg?branch=master)](https://travis-ci.org/bwmarrin/snowflake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23info-blue.svg)](https://discord.gg/0f1SbxBZjYq9jLBk)
 
 snowflake is a [Go](https://golang.org/) package that provides
 * A very simple Twitter snowflake generator.
@@ -61,7 +65,7 @@ This assumes you already have a working Go environment, if not please see
 [this page](https://golang.org/doc/install) first.
 
 ```sh
-go get github.com/bwmarrin/snowflake
+go get github.com/Turing-Chu/snowflake
 ```
 
 
@@ -86,7 +90,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/bwmarrin/snowflake"
+	"github.com/Turing-Chu/snowflake"
 )
 
 func main() {
@@ -107,17 +111,8 @@ func main() {
 	fmt.Printf("Base2  ID: %s\n", id.Base2())
 	fmt.Printf("Base64 ID: %s\n", id.Base64())
 
-	// Print out the ID's timestamp
-	fmt.Printf("ID Time  : %d\n", id.Time())
-
-	// Print out the ID's node number
-	fmt.Printf("ID Node  : %d\n", id.Node())
-
-	// Print out the ID's sequence number
-	fmt.Printf("ID Step  : %d\n", id.Step())
-
-  // Generate and print, all in one.
-  fmt.Printf("ID       : %d\n", node.Generate().Int64())
+    // Generate and print, all in one.
+    fmt.Printf("ID       : %d\n", node.Generate().Int64())
 }
 ```
 
@@ -140,4 +135,4 @@ go test -run=^$ -bench=.
 
 If your curious, check out this commit that shows benchmarks that compare a few 
 different ways of implementing a snowflake generator in Go.
-*  https://github.com/bwmarrin/snowflake/tree/9befef8908df13f4102ed21f42b083dd862b5036
+*  https://github.com/Turing-Chu/snowflake/tree/9befef8908df13f4102ed21f42b083dd862b5036
