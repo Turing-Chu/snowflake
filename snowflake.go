@@ -14,9 +14,9 @@ import (
 var (
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
 	// You may customize this to set a different epoch for your application.
-    // 1577811600000: 2020-01-01 00:00:00+08:00
-    // EpochBits = 41, ID is 64 bit and first set to 0 unused.
-    Epoch int64 = 1547811600000
+	// 1577811600000: 2020-01-01 00:00:00+08:00
+	// EpochBits = 41, ID is 64 bit and first set to 0 unused.
+	Epoch int64 = 1547811600000
 
 	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -28,9 +28,11 @@ var (
 )
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
+
 var decodeBase32Map [256]byte
 
 const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
+
 var decodeBase58Map [256]byte
 
 // A JSONSyntaxError is returned from UnmarshalJSON if an invalid ID is provided.
@@ -73,13 +75,13 @@ func init() {
 type Node struct {
 	mu    sync.Mutex
 	epoch time.Time
-	time  int64			// 时间戳
-	node  int64			// 分布式节点
-	step  int64			// 序列号
+	time  int64 // 时间戳
+	node  int64 // 分布式节点
+	step  int64 // 序列号
 
-	nodeMax   int64		// 分布式节点最大位数, 默认是10bit
-	nodeMask  int64		// 分布式节点存储的值,
-	stepMask  int64		// 序列号存储的值
+	nodeMax   int64 // 分布式节点最大位数, 默认是10bit
+	nodeMask  int64 // 分布式节点存储的值,
+	stepMask  int64 // 序列号存储的值
 	timeShift uint8
 	nodeShift uint8
 }
@@ -110,16 +112,13 @@ func NewNode(node int64) (*Node, error) {
 	return &n, nil
 }
 
-// Generate creates and returns a unique snowflake ID
-// To help guarantee uniqueness
-// - Make sure your system is keeping accurate system time
-// - Make sure you never have multiple nodes running with the same node ID
-func (n *Node) Generate() ID {
+// GenerateWithTimestamp create with specified timestamp(second,nano) and return
+// a unique snowflake ID
+func (n *Node) GenerateWithTimestamp(second, nano int64) ID {
 
 	n.mu.Lock()
-
-	now := time.Since(n.epoch).Nanoseconds() / 1000000
-
+	t := time.Unix(second, nano)
+	now := t.Sub(n.epoch).Nanoseconds() / 1000000
 	if now == n.time {
 		n.step = (n.step + 1) & n.stepMask
 
@@ -143,6 +142,15 @@ func (n *Node) Generate() ID {
 	return r
 }
 
+// Generate creates and returns a unique snowflake ID
+// To help guarantee uniqueness
+// - Make sure your system is keeping accurate system time
+// - Make sure you never have multiple nodes running with the same node ID
+func (n *Node) Generate() ID {
+	now := time.Now()
+	return n.GenerateWithTimestamp(now.Unix(), int64(now.Nanosecond()))
+}
+
 // Int64 returns an int64 of the snowflake ID
 func (f ID) Int64() int64 {
 	return int64(f)
@@ -152,6 +160,7 @@ func (f ID) Int64() int64 {
 func (f ID) Hex() string {
 	return strconv.FormatInt(int64(f), 16)
 }
+
 // ParseBase16 converts a hex string into a snowflake ID
 func ParseHex(id string) (ID, error) {
 	i, err := strconv.ParseInt(id, 16, 64)
@@ -196,7 +205,6 @@ func ParseBase16(id string) (ID, error) {
 	i, err := strconv.ParseInt(id, 16, 64)
 	return ID(i), err
 }
-
 
 // Base32 uses the z-base-32 character set but encodes and decodes similar
 // to base58, allowing it to create an even smaller result string.
