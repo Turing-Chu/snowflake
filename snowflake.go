@@ -31,6 +31,10 @@ const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
 
 var decodeBase32Map [256]byte
 
+const encodeBase34Map = "HEN9VAQ7Y82SKDCPBF6J31XU0TW54GMLRZ"
+
+var decodeBase34Map [256]byte
+
 const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
 
 var decodeBase58Map [256]byte
@@ -45,6 +49,9 @@ func (j JSONSyntaxError) Error() string {
 // ErrInvalidBase58 is returned by ParseBase58 when given an invalid []byte
 var ErrInvalidBase58 = errors.New("invalid base58")
 
+// ErrInvalidBase34 is returned by ParseBase34 when given an invalid []byte
+var ErrInvalidBase34 = errors.New("invalid base34")
+
 // ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
 var ErrInvalidBase32 = errors.New("invalid base32")
 
@@ -52,13 +59,20 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 // This speeds up the process tremendously.
 func init() {
 
-	// TODO为什么要先设置为0xFF 然后再设置变量?
 	for i := 0; i < len(encodeBase58Map); i++ {
 		decodeBase58Map[i] = 0xFF
 	}
 
 	for i := 0; i < len(encodeBase58Map); i++ {
 		decodeBase58Map[encodeBase58Map[i]] = byte(i)
+	}
+
+	for i := 0; i < len(encodeBase34Map); i++ {
+		decodeBase34Map[i] = 0xFF
+	}
+
+	for i := 0; i < len(encodeBase34Map); i++ {
+		decodeBase34Map[encodeBase34Map[i]] = byte(i)
 	}
 
 	for i := 0; i < len(encodeBase32Map); i++ {
@@ -242,6 +256,41 @@ func ParseBase32(b []byte) (ID, error) {
 			return -1, ErrInvalidBase32
 		}
 		id = id*32 + int64(decodeBase32Map[b[i]])
+	}
+
+	return ID(id), nil
+}
+
+// Base34 returns a base34 string of the snowflake ID
+func (f ID) Base34() string {
+	if f < 34 {
+		return string(encodeBase34Map[f])
+	}
+
+	b := make([]byte, 0, 11)
+	for f >= 34 {
+		b = append(b, encodeBase34Map[f%34])
+		f /= 34
+	}
+	b = append(b, encodeBase34Map[f])
+
+	for x, y := 0, len(b)-1; x < y; x, y = x+1, y-1 {
+		b[x], b[y] = b[y], b[x]
+	}
+
+	return string(b)
+}
+
+// ParseBase34 parses a base34 []byte into a snowflake ID
+func ParseBase34(b []byte) (ID, error) {
+
+	var id int64
+
+	for i := range b {
+		if decodeBase34Map[b[i]] == 0xFF {
+			return -1, ErrInvalidBase34
+		}
+		id = id*34 + int64(decodeBase34Map[b[i]])
 	}
 
 	return ID(id), nil

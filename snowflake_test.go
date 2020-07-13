@@ -83,6 +83,7 @@ func TestPrintAll(t *testing.T) {
 	t.Logf("String   : %#v", id.String())
 	t.Logf("Base2    : %#v", id.Base2())
 	t.Logf("Base32   : %#v", id.Base32())
+	t.Logf("Base34   : %#v", id.Base34())
 	t.Logf("Base36   : %#v", id.Base36())
 	t.Logf("Base58   : %#v", id.Base58())
 	t.Logf("Base64   : %#v", id.Base64())
@@ -241,6 +242,26 @@ func TestBase32(t *testing.T) {
 	}
 }
 
+func TestBase34(t *testing.T) {
+
+	node, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	for i := 0; i < 10; i++ {
+		sf := node.Generate()
+		b34 := sf.Base34()
+		psf, err := ParseBase34([]byte(b34))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sf != psf {
+			t.Fatal("Parsed does not match String")
+		}
+	}
+}
+
 func TestBase36(t *testing.T) {
 	node, err := NewNode(0)
 	if err != nil {
@@ -279,7 +300,6 @@ func TestBase58(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-
 		sf := node.Generate()
 		b58 := sf.Base58()
 		psf, err := ParseBase58([]byte(b58))
